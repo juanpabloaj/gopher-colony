@@ -3,7 +3,7 @@
 ## Project Overview
 This document outlines the development stages for **Gopher Colony**. The approach is incremental: each phase builds upon the previous one, delivering a self-contained, deployable artifact before increasing complexity.
 
-The primary goal is to simulate a production environment. Therefore, every phase implies the inclusion of necessary testing, documentation, and error handling mechanisms required for a stable release.
+Every phase implies the inclusion of necessary testing, documentation, and error handling mechanisms required for a stable release.
 
 ---
 
