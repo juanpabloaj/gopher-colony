@@ -1,0 +1,96 @@
+:root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --accent: #3b82f6;
+    --success: #22c55e;
+    --error: #ef4444;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.5;
+    padding: 2rem;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+h1 {
+    margin-bottom: 2rem;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.badge {
+    font-size: 0.8rem;
+    background: var(--accent);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+h2 {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.status-indicator {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--error);
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.status-indicator.connected {
+    background: rgba(34, 197, 94, 0.2);
+    color: var(--success);
+}
+
+.log-console {
+    background: #000;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+    padding: 1rem;
+    border-radius: 4px;
+    height: 300px;
+    overflow-y: auto;
+    color: #e2e8f0;
+}
+
+.log-entry {
+    margin-bottom: 0.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.25rem;
+}
+
+.log-entry .time {
+    color: var(--text-secondary);
+    margin-right: 0.5rem;
+}
