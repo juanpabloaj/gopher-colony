@@ -109,6 +109,53 @@ func (s *SimulationService) simulateGophers(room *domain.Room, changes *domain.U
 
 	// Move Logic
 	for _, g := range gophers {
+		didAction := false
+
+		// 1. Try to Harvest Logic
+		// Capacity check (limit 10 for now)
+		if g.Inventory.Wood < 10 {
+			offsets := [][]int{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
+			// Randomize offsets order? Or deterministic? Deterministic is fine.
+
+			for _, offset := range offsets {
+				tX, tY := g.X+offset[0], g.Y+offset[1]
+				tile, ok := room.GetTile(tX, tY)
+				if ok && tile.Terrain == domain.TerrainTree {
+					// Attempt Harvest
+					// Tree -> Sapling (Sustainable forestry)
+					if room.SetTile(tX, tY, domain.TerrainSapling) {
+						// Success
+						// Update Gopher (Need to update in Room too?
+						// Room.Gophers is a map of pointers. If we update local 'g', it's a COPY from GetGophers() value.
+						// Wait, GetGophers() returns []Gopher (copies).
+						// So we need a way to UpdateGopher in Room.
+						// Room.MoveGopher updates position. We need Room.UpdateGopherState/Inventory?
+						// Or expose Room.GetGopher(id) *Gopher?
+						// Room.Gophers is private.
+						// Let's add UpdateGopher method or use a callback?
+						// Actually Room.Gophers map holds pointers.
+						// But GetGophers returns copies.
+						// We need to write back using a new method Room.UpdateGopher(gopher).
+
+						updatedGopher := g
+						updatedGopher.Inventory.Wood++
+						updatedGopher.State = domain.GopherStateHarvesting
+
+						room.UpdateGopher(&updatedGopher)
+						changes.Gophers = append(changes.Gophers, updatedGopher)
+						changes.Tiles = append(changes.Tiles, domain.Tile{X: tX, Y: tY, Terrain: domain.TerrainSapling})
+
+						didAction = true
+						break
+					}
+				}
+			}
+		}
+
+		if didAction {
+			continue
+		}
+
 		// Random Walk (20% chance)
 		if s.rng.Float64() < 0.2 {
 			// Random direction
@@ -121,13 +168,20 @@ func (s *SimulationService) simulateGophers(room *domain.Room, changes *domain.U
 
 			newX, newY := g.X+dx, g.Y+dy
 			if room.MoveGopher(g.ID, newX, newY) {
-				// Get updated state
+				// Get updated state (MoveGopher updates position in room)
+				// We need to fetch it or construct it.
+				// MoveGopher updates X, Y, State in the room map pointer.
+				// We need to return that new state.
 				updatedGopher := g
 				updatedGopher.X = newX
 				updatedGopher.Y = newY
 				updatedGopher.State = domain.GopherStateMoving
 				changes.Gophers = append(changes.Gophers, updatedGopher)
 			}
+		} else {
+			// Even if idle, if state was previously Moving/Harvesting, we might want to broadcast Idle?
+			// Currently we don't broadcast idle unless it changes.
+			// But since we operate on snapshots, we rely on 'changes' payload.
 		}
 	}
 }

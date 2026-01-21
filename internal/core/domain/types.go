@@ -40,6 +40,17 @@ func (r *Room) SetTile(x, y int, terrain TerrainType) bool {
 	return true
 }
 
+// GetTile returns a copy of the tile at x,y.
+func (r *Room) GetTile(x, y int) (Tile, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if r.World == nil || x < 0 || y < 0 || x >= r.World.Width || y >= r.World.Height {
+		return Tile{}, false
+	}
+	return *r.World.Grid[y][x], true
+}
+
 // ToggleTile cycles the terrain type at x,y and returns the new type and true if changed.
 func (r *Room) ToggleTile(x, y int) (TerrainType, bool) {
 	r.mu.Lock()
@@ -116,6 +127,20 @@ func (r *Room) GetGophers() []Gopher {
 		list = append(list, *g)
 	}
 	return list
+}
+
+// UpdateGopher updates the state/inventory of a gopher.
+func (r *Room) UpdateGopher(g *Gopher) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if existing, ok := r.Gophers[g.ID]; ok {
+		// Update fields (X, Y handled by MoveGopher usually, but safe to allow sync)
+		existing.Inventory = g.Inventory
+		existing.State = g.State
+		// existing.X = g.X // Optional
+		// existing.Y = g.Y
+	}
 }
 
 // MoveGopher updates a gopher's position.

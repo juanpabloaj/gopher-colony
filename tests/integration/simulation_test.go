@@ -61,3 +61,46 @@ func TestSimulationGrowth(t *testing.T) {
 		t.Errorf("Room state mismatch. Expected Tree (4), got %d", tile.Terrain)
 	}
 }
+
+func TestSimulationHarvesting(t *testing.T) {
+	// Setup
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	rng := rand.New(rand.NewSource(42)) // Deterministic
+	simService := services.NewSimulationService(logger, services.WithRNG(rng))
+
+	mapGen := services.NewMapGenerator()
+	roomRepo := memsockets.NewRoomManager(mapGen)
+	room, _ := roomRepo.CreateRoom("harvest_test")
+
+	// Setup Condition: Gopher at 5,5. Tree at 5,6.
+	gopher := &domain.Gopher{ID: "worker", X: 5, Y: 5}
+	room.AddGopher(gopher)
+	room.SetTile(5, 6, domain.TerrainTree)
+
+	// Tick
+	// Gopher logic checks neighbors.
+	// offset {0,1} -> 5,6.
+	changes := simService.Tick(room)
+
+	// Verify Changes
+	foundChange := false
+	for _, tile := range changes.Tiles {
+		if tile.X == 5 && tile.Y == 6 && tile.Terrain == domain.TerrainSapling {
+			foundChange = true
+			break
+		}
+	}
+	if !foundChange {
+		t.Errorf("Expected Tree at 5,6 to become Sapling")
+	}
+
+	// Verify Inventory (Need to refetch gopher from room as changes only contain DELTA)
+	// But changes.Gophers also has the updated gopher state.
+	updatedGophers := room.GetGophers()
+	if len(updatedGophers) != 1 {
+		t.Fatalf("Expected 1 gopher")
+	}
+	if updatedGophers[0].Inventory.Wood != 1 {
+		t.Errorf("Expected 1 wood, got %d", updatedGophers[0].Inventory.Wood)
+	}
+}

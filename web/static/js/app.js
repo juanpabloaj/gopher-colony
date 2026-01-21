@@ -164,11 +164,20 @@ function updateGopher(gopher) {
         // Create new Gopher
         div = document.createElement('div');
         div.className = 'gopher';
-        div.textContent = '🐹';
         div.id = `gopher-${gopher.id}`;
         gridDiv.appendChild(div);
         gopherMap.set(gopher.id, div);
     }
+
+    // Update visual content based on inventory
+    let html = '<span class="gopher-body">🐹</span>';
+    if (gopher.inventory && gopher.inventory.wood > 0) {
+        html += '<span class="gopher-cargo">🪵</span>';
+        div.classList.add('carrying');
+    } else {
+        div.classList.remove('carrying');
+    }
+    div.innerHTML = html;
 
     // Calculate position
     // Tiles are 20px, Gap is 1px, Padding is 10px

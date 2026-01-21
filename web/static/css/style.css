@@ -111,15 +111,32 @@ h2 {
     position: absolute;
     width: 20px;
     height: 20px;
-    font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     pointer-events: none;
-    /* Let clicks pass through to tiles */
     transition: all 0.5s ease-in-out;
-    /* Smooth movement */
     z-index: 10;
+}
+
+.gopher-body {
+    font-size: 16px;
+    z-index: 1;
+}
+
+.gopher.carrying .gopher-body {
+    /* Slightly shift left to make room? Or keep centered? */
+    /* font-size: 14px; */
+}
+
+.gopher-cargo {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    font-size: 10px;
+    z-index: 2;
+    filter: drop-shadow(0 0 1px black);
+    /* Outline for visibility */
 }
 
 .tile {
