@@ -37,7 +37,8 @@ func TestTileInteraction(t *testing.T) {
 	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	mapGen := services.NewSeededMapGenerator(123) // Deterministic map
+	// Use seeded generator for predictable terrain
+	mapGen := services.NewMapGenerator() // Deterministic map
 	roomRepo := memsockets.NewRoomManager(mapGen)
 	connManager := services.NewConnectionManager(logger, roomRepo, nil)
 
@@ -139,8 +140,8 @@ func TestTileInteraction(t *testing.T) {
 		targetTile := page.Locator("#" + grassID)
 		targetTile.Click()
 
-		// Should become stone
-		err = expect.Locator(targetTile).ToHaveClass("tile tile-stone")
+		// Should become water (Grass=0 -> Water=1 -> Stone=2 ...)
+		err = expect.Locator(targetTile).ToHaveClass("tile tile-water")
 		if err != nil {
 			t.Errorf("Grass tile %s did not become stone: %v", grassID, err)
 		}

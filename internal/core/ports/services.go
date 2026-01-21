@@ -34,5 +34,5 @@ type RoomRepository interface {
 
 // MapGenerator defines logic to create new worlds.
 type MapGenerator interface {
-	Generate(width, height int) *domain.World
+	Generate(width, height int, seed int64) *domain.World
 }

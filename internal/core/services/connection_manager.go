@@ -174,23 +174,10 @@ func (s *ConnectionManager) handleCommand(ctx context.Context, room *domain.Room
 
 	// Simple Logic: Toggle Terrain
 	if cmd.Action == "click" {
-		// Toggle logic: Grass -> Stone -> Water -> Grass
-		// Need to get current state (safe read first, or blind write)
-		// Simpler: Just cycle blindly or use a "Set" command.
-		// For Phase 3 Goal, let's just make it Stone if Grass, Water if Stone, Grass if Water.
-		// But Room.SetTile takes 'Terrain'. We need to know 'Current'.
-
-		// Optimization: We could add a 'CycleTile' method to Room, but keeping logic here is fine for now if we accept a read-lock then write-lock race, OR we just trust client? No, never trust client.
-		// Let's implement Cycle logic inside Room.SetTile? No, SetTile should be explicit.
-		// Let's implement func (r *Room) ToggleTile(x, y) (domain.Tile, bool)
-
-		// For now, let's just set to Stone to verify mutation works.
-		// TODO: Implement real game logic.
-		newTerrain := domain.TerrainStone
-
-		changed := room.SetTile(cmd.X, cmd.Y, newTerrain)
+		// Cycle terrain: Grass -> Water -> Stone -> Sapling -> Tree -> Grass
+		newTile, changed := room.CycleTile(cmd.X, cmd.Y)
 		if changed {
-			s.broadcastUpdate(room.ID, cmd.X, cmd.Y, newTerrain)
+			s.broadcastUpdate(room.ID, newTile.X, newTile.Y, newTile.Terrain)
 		}
 	}
 }

@@ -2,31 +2,21 @@ package services
 
 import (
 	"math/rand"
-	"time"
 
 	"github.com/juanpabloaj/gophercolony/internal/core/domain"
 )
 
 type MapGenerator struct {
-	seed int64
 }
 
 func NewMapGenerator() *MapGenerator {
-	return &MapGenerator{
-		seed: time.Now().UnixNano(),
-	}
+	return &MapGenerator{}
 }
 
-func NewSeededMapGenerator(seed int64) *MapGenerator {
-	return &MapGenerator{
-		seed: seed,
-	}
-}
-
-func (g *MapGenerator) Generate(width, height int) *domain.World {
+func (g *MapGenerator) Generate(width, height int, seed int64) *domain.World {
 	// For Phase 2, we use a simple local random.
 	// In production/Phase 3+, we might use Perlin noise or seeded rand.
-	rnd := rand.New(rand.NewSource(g.seed)) // nolint:gosec
+	rnd := rand.New(rand.NewSource(seed)) // nolint:gosec
 
 	world := domain.NewWorld(width, height)
 

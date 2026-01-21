@@ -7,13 +7,14 @@ import (
 	"github.com/juanpabloaj/gophercolony/internal/core/services"
 )
 
-func TestMapGeneration(t *testing.T) {
+func TestMapGenerator_Generate(t *testing.T) {
 	width := 20
 	height := 20
+	seed := int64(12345)
 
 	// Use fixed seed for deterministic testing
-	gen := services.NewSeededMapGenerator(12345)
-	world := gen.Generate(width, height)
+	gen := services.NewMapGenerator()
+	world := gen.Generate(width, height, seed)
 
 	// 1. Verify Dimensions
 	if world.Width != width {

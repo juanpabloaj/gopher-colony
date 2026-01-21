@@ -11,3 +11,12 @@ func GenerateID() string {
 	rand.Read(b)
 	return hex.EncodeToString(b)
 }
+
+// HashString converts a string to an int64 hash.
+func HashString(s string) int64 {
+	var h int64
+	for _, c := range s {
+		h = 31*h + int64(c)
+	}
+	return h
+}

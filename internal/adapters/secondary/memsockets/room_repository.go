@@ -5,6 +5,7 @@ import (
 
 	"github.com/juanpabloaj/gophercolony/internal/core/domain"
 	"github.com/juanpabloaj/gophercolony/internal/core/ports"
+	"github.com/juanpabloaj/gophercolony/pkg/utils"
 )
 
 type RoomManager struct {
@@ -39,7 +40,9 @@ func (rm *RoomManager) CreateRoom(id domain.RoomID) (*domain.Room, bool) {
 
 	// Create new room with a generated world
 	// 32x32 is the Phase 2 standard
-	world := rm.generator.Generate(32, 32)
+	// Use room ID hash as seed for deterministic generation
+	seed := utils.HashString(string(id))
+	world := rm.generator.Generate(32, 32, seed)
 
 	room := &domain.Room{
 		ID:      id,

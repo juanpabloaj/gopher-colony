@@ -145,3 +145,19 @@ func (r *Room) MoveGopher(id string, x, y int) bool {
 	g.State = GopherStateMoving
 	return true
 }
+
+// CycleTile cycles the terrain at x,y to the next type.
+func (r *Room) CycleTile(x, y int) (Tile, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.World == nil || x < 0 || y < 0 || x >= r.World.Width || y >= r.World.Height {
+		return Tile{}, false
+	}
+
+	tile := r.World.Grid[y][x]
+	nextType := (tile.Terrain + 1) % 5 // 5 types: 0..4
+
+	tile.Terrain = nextType
+	return *tile, true
+}
