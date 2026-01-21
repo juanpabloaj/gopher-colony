@@ -42,8 +42,9 @@ func (rm *RoomManager) CreateRoom(id domain.RoomID) (*domain.Room, bool) {
 	world := rm.generator.Generate(32, 32)
 
 	room := &domain.Room{
-		ID:    id,
-		World: world,
+		ID:      id,
+		World:   world,
+		Gophers: make(map[string]*domain.Gopher),
 	}
 	rm.rooms[id] = room
 	return room, true

@@ -103,6 +103,23 @@ h2 {
     padding: 10px;
     border: 1px solid #475569;
     margin: 20px auto;
+    position: relative;
+    /* For absolute positioning of agents */
+}
+
+.gopher {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    /* Let clicks pass through to tiles */
+    transition: all 0.5s ease-in-out;
+    /* Smooth movement */
+    z-index: 10;
 }
 
 .tile {
@@ -134,6 +151,7 @@ h2 {
     background-color: #757575;
     color: #e0e0e0;
 }
+
 /* UI Controls */
 .room-controls {
     margin-top: 1rem;
@@ -181,7 +199,7 @@ h2 {
 .tile-sapling {
     color: #4caf50;
     /* grass background */
-    background-color: #2e7d32; 
+    background-color: #2e7d32;
 }
 
 .tile-tree {

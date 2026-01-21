@@ -2,6 +2,7 @@ package integration
 
 import (
 	"log/slog"
+	"math/rand"
 	"os"
 	"testing"
 
@@ -15,7 +16,9 @@ func TestSimulationGrowth(t *testing.T) {
 	// We want to verify that the SimulationService correctly transforms Saplings to Trees.
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	simService := services.NewSimulationService(logger)
+	// Use fixed seed for deterministic behavior
+	rng := rand.New(rand.NewSource(42))
+	simService := services.NewSimulationService(logger, services.WithRNG(rng))
 
 	// Create a room with a specific tile as Sapling
 	mapGen := services.NewMapGenerator()
@@ -37,7 +40,7 @@ func TestSimulationGrowth(t *testing.T) {
 	grew := false
 	for i := 0; i < 200; i++ {
 		changes := simService.Tick(room)
-		for _, c := range changes {
+		for _, c := range changes.Tiles {
 			if c.X == 5 && c.Y == 5 && c.Terrain == domain.TerrainTree {
 				grew = true
 				break

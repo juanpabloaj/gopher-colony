@@ -33,62 +33,57 @@ function log(msg) {
     logsDiv.scrollTop = logsDiv.scrollHeight;
 }
 
+// Terrain Configuration
+const TERRAIN_MAP = {
+    0: 'grass',
+    1: 'water',
+    2: 'stone',
+    3: 'sapling',
+    4: 'tree'
+};
+
+function updateTileVisuals(div, terrainType) {
+    const defaultType = 0; // Grass
+    // Handle cases where terrainType might be undefined
+    const type = terrainType !== undefined ? terrainType : defaultType;
+    const terrainName = TERRAIN_MAP[type] || 'grass';
+
+    // Update Class
+    div.className = `tile tile-${terrainName}`;
+
+    // Update Emoji Content
+    if (terrainName === 'water') div.textContent = '🌊';
+    else if (terrainName === 'stone') div.textContent = '🪨';
+    else if (terrainName === 'sapling') div.textContent = '🌱';
+    else if (terrainName === 'tree') div.textContent = '🌳';
+    else div.textContent = ''; // Grass
+}
+
 function renderGrid(payload) {
     gridDiv.innerHTML = '';
+    gopherMap.clear(); // Reset gophers
 
     // Set grid dimensions
     gridDiv.style.gridTemplateColumns = `repeat(${payload.width}, 20px)`;
     gridDiv.style.gridTemplateRows = `repeat(${payload.height}, 20px)`;
 
-    const TERRAIN_MAP = {
-        0: 'grass',
-        1: 'water',
-        2: 'stone',
-        3: 'sapling',
-        4: 'tree'
-    };
-
     payload.tiles.forEach(tile => {
-        // Default to Grass (0) if terrain is undefined (omitempty)
-        // Use 'type' property (mapped from Go struct tag)
-        const terrainType = tile.type !== undefined ? tile.type : 0;
-        const terrainName = TERRAIN_MAP[terrainType] || 'grass';
-
         const div = document.createElement('div');
         div.id = `tile-${tile.x}-${tile.y}`; // Add ID for easy update
-        div.className = `tile tile-${terrainName}`;
         div.title = `(${tile.x}, ${tile.y})`;
         div.onclick = () => sendClick(tile.x, tile.y);
 
-        // Optional: Emoji icons
-        if (terrainName === 'water') div.textContent = '🌊';
-        else if (terrainName === 'stone') div.textContent = '🪨';
-        else if (terrainName === 'sapling') div.textContent = '🌱';
-        else if (terrainName === 'tree') div.textContent = '🌳';
-        else div.textContent = ''; // Grass (empty or dot)
+        // Apply visual styling
+        updateTileVisuals(div, tile.type);
 
         gridDiv.appendChild(div);
     });
 }
 
 function updateTile(x, y, terrain) {
-    const TERRAIN_MAP = {
-        0: 'grass',
-        1: 'water',
-        2: 'stone',
-        3: 'sapling',
-        4: 'tree'
-    };
-    const terrainName = TERRAIN_MAP[terrain] || 'grass';
-
     const div = document.getElementById(`tile-${x}-${y}`);
     if (div) {
-        div.className = `tile tile-${terrainName}`;
-        if (terrainName === 'water') div.textContent = '🌊';
-        else if (terrainName === 'stone') div.textContent = '🪨';
-        else if (terrainName === 'sapling') div.textContent = '🌱';
-        else if (terrainName === 'tree') div.textContent = '🌳';
-        else div.textContent = ''; // Grass
+        updateTileVisuals(div, terrain);
 
         // Flash effect
         div.style.filter = "brightness(2)";
@@ -127,16 +122,24 @@ function connect() {
         if (msg.type === 'init') {
             log('Received Map Initialization');
             renderGrid(msg.payload);
+            // Render initial gophers
+            if (msg.payload.gophers) {
+                msg.payload.gophers.forEach(g => updateGopher(g));
+            }
         } else if (msg.type === 'update') {
             // Handle delta update
-            msg.payload.tiles.forEach(t => updateTile(t.x, t.y, t.type));
+            if (msg.payload.tiles) {
+                msg.payload.tiles.forEach(t => updateTile(t.x, t.y, t.type));
+            }
+            if (msg.payload.gophers) {
+                msg.payload.gophers.forEach(g => updateGopher(g));
+            }
         } else if (msg.type === 'echo') {
             log(`Echo: ${JSON.stringify(msg.payload)}`);
         } else {
             log(`RX: ${JSON.stringify(msg)}`);
         }
     };
-
     ws.onclose = () => {
         statusDiv.textContent = 'Disconnected';
         statusDiv.classList.remove('connected');
@@ -149,6 +152,35 @@ function connect() {
         console.error("WS Error", error);
         log('WebSocket error occurred.');
     };
+}
+
+// Map to track gopher DOM elements by ID
+const gopherMap = new Map();
+
+function updateGopher(gopher) {
+    let div = gopherMap.get(gopher.id);
+
+    if (!div) {
+        // Create new Gopher
+        div = document.createElement('div');
+        div.className = 'gopher';
+        div.textContent = '🐹';
+        div.id = `gopher-${gopher.id}`;
+        gridDiv.appendChild(div);
+        gopherMap.set(gopher.id, div);
+    }
+
+    // Calculate position
+    // Tiles are 20px, Gap is 1px, Padding is 10px
+    const CELL_SIZE = 20;
+    const GAP = 1;
+    const PADDING = 10;
+
+    const left = PADDING + gopher.x * (CELL_SIZE + GAP);
+    const top = PADDING + gopher.y * (CELL_SIZE + GAP);
+
+    div.style.left = `${left}px`;
+    div.style.top = `${top}px`;
 }
 
 // Start connection

@@ -45,9 +45,9 @@ func (t *RoomTicker) Start() {
 			t.logger.Info("Stopping ticker for room", "room_id", t.room.ID)
 			return
 		case <-ticker.C:
-			// Execute Simulation Tick
+			// Tick the simulation
 			changes := t.simService.Tick(t.room)
-			if len(changes) > 0 {
+			if len(changes.Tiles) > 0 || len(changes.Gophers) > 0 {
 				t.broadcastChanges(changes)
 			}
 		}
@@ -58,25 +58,30 @@ func (t *RoomTicker) Stop() {
 	close(t.stopChan)
 }
 
-func (t *RoomTicker) broadcastChanges(tiles []domain.Tile) {
-	update := domain.UpdatePayload{
-		Tiles: tiles,
-	}
-
-	bytes, err := json.Marshal(update)
+func (t *RoomTicker) broadcastChanges(updates domain.UpdatePayload) {
+	// Marshal the specific payload first
+	payloadBytes, err := json.Marshal(updates)
 	if err != nil {
-		t.logger.Error("failed to marshal ticker update", "error", err)
+		t.logger.Error("Failed to marshal update payload", "error", err)
 		return
 	}
 
 	msg := domain.Message{
 		Type:    domain.MsgTypeUpdate,
-		Payload: bytes,
+		Payload: payloadBytes,
 	}
 
-	finalBytes, _ := json.Marshal(msg)
+	// Double marshal for the envelope (ConnectionService expects []byte for the whole message usually?
+	// Or does Broadcast logic handle framing?
+	// ConnectionService.Broadcast signature is (roomID, []byte).
+	// Usually this byte slice is the FINAL WS Text Message.
+	// So we need to marshal the outer Message too.
 
-	// Broadcast using ConnectionService
-	// Note: We are using Broadcast(roomID, msg)
+	finalBytes, err := json.Marshal(msg)
+	if err != nil {
+		t.logger.Error("Failed to marshal wrapper message", "error", err)
+		return
+	}
+
 	t.connService.Broadcast(t.room.ID, finalBytes)
 }
