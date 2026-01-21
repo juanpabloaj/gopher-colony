@@ -11,6 +11,16 @@ const wsUrl = `${protocol}//${window.location.host}/ws?room=${room}`;
 
 // Update UI
 document.querySelector('h1').innerHTML += ` <span class="badge" style="background:#64748b">Room: ${room}</span>`;
+document.getElementById('room-input').value = room;
+
+function changeRoom() {
+    const newRoom = document.getElementById('room-input').value;
+    if (newRoom && newRoom !== room) {
+        const url = new URL(window.location);
+        url.searchParams.set('room', newRoom);
+        window.location.href = url.toString();
+    }
+}
 
 function log(msg) {
     const entry = document.createElement('div');
@@ -30,23 +40,72 @@ function renderGrid(payload) {
     gridDiv.style.gridTemplateColumns = `repeat(${payload.width}, 20px)`;
     gridDiv.style.gridTemplateRows = `repeat(${payload.height}, 20px)`;
 
+    const TERRAIN_MAP = {
+        0: 'grass',
+        1: 'water',
+        2: 'stone'
+    };
+
     payload.tiles.forEach(tile => {
+        // Default to Grass (0) if terrain is undefined (omitempty)
+        // Use 'type' property (mapped from Go struct tag)
+        const terrainType = tile.type !== undefined ? tile.type : 0;
+        const terrainName = TERRAIN_MAP[terrainType] || 'grass';
+
         const div = document.createElement('div');
-        div.className = `tile tile-${tile.Terrain}`;
-        div.title = `(${tile.X}, ${tile.Y})`;
+        div.id = `tile-${tile.x}-${tile.y}`; // Add ID for easy update
+        div.className = `tile tile-${terrainName}`;
+        div.title = `(${tile.x}, ${tile.y})`;
+        div.onclick = () => sendClick(tile.x, tile.y);
 
         // Optional: Emoji icons
-        if (tile.Terrain === 'water') div.textContent = '🌊';
-        else if (tile.Terrain === 'stone') div.textContent = '🪨';
+        if (terrainName === 'water') div.textContent = '🌊';
+        else if (terrainName === 'stone') div.textContent = '🪨';
         else div.textContent = '🌱'; // Grass
 
         gridDiv.appendChild(div);
     });
 }
 
+function updateTile(x, y, terrain) {
+    const TERRAIN_MAP = {
+        0: 'grass',
+        1: 'water',
+        2: 'stone'
+    };
+    const terrainName = TERRAIN_MAP[terrain] || 'grass';
+
+    const div = document.getElementById(`tile-${x}-${y}`);
+    if (div) {
+        div.className = `tile tile-${terrainName}`;
+        if (terrainName === 'water') div.textContent = '🌊';
+        else if (terrainName === 'stone') div.textContent = '🪨';
+        else div.textContent = '🌱'; // Grass
+
+        // Flash effect
+        div.style.filter = "brightness(2)";
+        setTimeout(() => div.style.filter = "", 200);
+    }
+}
+
+function sendClick(x, y) {
+    if (!wsGlobal || wsGlobal.readyState !== WebSocket.OPEN) return;
+
+    const cmd = {
+        type: "cmd",
+        payload: {
+            action: "click",
+            x: x,
+            y: y
+        }
+    };
+    wsGlobal.send(JSON.stringify(cmd));
+}
+
 function connect() {
     log(`Connecting to ${wsUrl}...`);
     const ws = new WebSocket(wsUrl);
+    wsGlobal = ws;
 
     ws.onopen = () => {
         statusDiv.textContent = 'Connected';
@@ -55,20 +114,18 @@ function connect() {
     };
 
     ws.onmessage = (event) => {
-        try {
-            const msg = JSON.parse(event.data);
+        const msg = JSON.parse(event.data);
 
-            if (msg.type === 'init') {
-                log('Received Map Initialization');
-                renderGrid(msg.payload);
-            } else if (msg.type === 'echo') {
-                log(`Echo: ${JSON.stringify(msg.payload)}`);
-            } else {
-                log(`RX: ${JSON.stringify(msg)}`);
-            }
-        } catch (e) {
-            // Fallback for Phase 1 text messages (if any)
-            log(`RX [Text]: ${event.data}`);
+        if (msg.type === 'init') {
+            log('Received Map Initialization');
+            renderGrid(msg.payload);
+        } else if (msg.type === 'update') {
+            // Handle delta update
+            msg.payload.tiles.forEach(t => updateTile(t.x, t.y, t.type));
+        } else if (msg.type === 'echo') {
+            log(`Echo: ${JSON.stringify(msg.payload)}`);
+        } else {
+            log(`RX: ${JSON.stringify(msg)}`);
         }
     };
 

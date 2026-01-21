@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 
+	"sync"
+
 	"github.com/coder/websocket"
 
 	"github.com/juanpabloaj/gophercolony/internal/core/ports"
@@ -13,28 +15,58 @@ import (
 
 // Adapter implements ports.Socket using github.com/coder/websocket.
 type Adapter struct {
-	conn *websocket.Conn
+	conn      *websocket.Conn
+	sendChan  chan []byte
+	closeOnce sync.Once
 }
 
 // NewAdapter creates a new WebSocket adapter.
 func NewAdapter(conn *websocket.Conn) *Adapter {
 	return &Adapter{
-		conn: conn,
+		conn:     conn,
+		sendChan: make(chan []byte, 256), // Buffered channel for backpressure
 	}
 }
 
-// Send writes a message to the websocket.
+// Send queues a message to be sent. Non-blocking.
 func (a *Adapter) Send(ctx context.Context, msg []byte) error {
-	return a.conn.Write(ctx, websocket.MessageText, msg)
+	select {
+	case a.sendChan <- msg:
+		return nil
+	default:
+		return fmt.Errorf("client buffer full, dropping message")
+	}
 }
 
-// Close closes the connection with a status code.
+// Close closes the connection.
 func (a *Adapter) Close(code int) error {
-	return a.conn.Close(websocket.StatusCode(code), "closing")
+	var err error
+	a.closeOnce.Do(func() {
+		close(a.sendChan)
+		err = a.conn.Close(websocket.StatusCode(code), "closing")
+	})
+	return err
+}
+
+func (a *Adapter) writePump() {
+	ctx := context.Background()
+	for msg := range a.sendChan {
+		// We use a separate context for writes to ensure they complete
+		// independent of the request context (which might be cancelled)
+		// but we respect the connection state.
+		if err := a.conn.Write(ctx, websocket.MessageText, msg); err != nil {
+			break // Connection closed or error
+		}
+	}
 }
 
 // Listen starts a loop to read messages. It blocks until error or close.
 func (a *Adapter) Listen(ctx context.Context, onMessage func(msg []byte)) error {
+	// Start Write Pump: linked to the lifecycle of the Read Loop
+	go a.writePump()
+
+	defer a.Close(int(websocket.StatusNormalClosure)) // Ensure cleanup on read error
+
 	for {
 		typ, reader, err := a.conn.Reader(ctx)
 		if err != nil {

@@ -6,10 +6,25 @@ import "encoding/json"
 type MessageType string
 
 const (
-	MsgTypeInit  MessageType = "init"
-	MsgTypeEcho  MessageType = "echo"
-	MsgTypeError MessageType = "error"
+	MsgTypeInit   MessageType = "init"
+	MsgTypeEcho   MessageType = "echo"
+	MsgTypeError  MessageType = "error"
+	MsgTypeCmd    MessageType = "cmd"
+	MsgTypeUpdate MessageType = "update"
 )
+
+// CommandPayload represents a player action (Input).
+type CommandPayload struct {
+	Action string `json:"action"`
+	X      int    `json:"x"`
+	Y      int    `json:"y"`
+	Params string `json:"params,omitempty"`
+}
+
+// UpdatePayload represents a partial world update (Output).
+type UpdatePayload struct {
+	Tiles []Tile `json:"tiles"`
+}
 
 // Message is the standard container for all WS communication.
 type Message struct {

@@ -2,31 +2,88 @@
 
 This document defines the WebSocket communication protocol between the Client and the Server.
 
-## Phase 1 (Connectivity)
+## Transport layer
+- **URL**: `ws://HOST/ws?room=[room_id]`
+- **Format**: JSON (UTF-8).
 
-**Format**: Text / UTF-8 Strings.
+## Message Structure
 
-### Client -> Server
+All messages follow this standard envelope:
+```json
+{
+  "type": "string",  // Message Type (cmd, init, update, echo)
+  "payload": { ... } // Detailed data
+}
+```
 
-| Type | Content | Description |
-|------|---------|-------------|
-| Text | Free text | Currently, the server echoes any text sent. |
+### 1. Client -> Server (Commands)
 
-### Server -> Client
+**Type**: `cmd`
 
-| Type | Content | Description |
-|------|---------|-------------|
-| Text | `echo: <original_msg>` | Verification response. |
+| Field | Type | Description |
+|-------|------|-------------|
+| `action` | string | The action to perform (e.g., "click") |
+| `x` | int | Target X coordinate |
+| `y` | int | Target Y coordinate |
 
-### Connection Lifecycle
+**Example:**
+```json
+{
+  "type": "cmd",
+  "payload": {
+    "action": "click",
+    "x": 10,
+    "y": 5
+  }
+}
+```
 
-1. **Connect**: Client connects to `/ws`.
-2. **Handshake**: Standard HTTP Upgrade.
-3. **Session**: Connection is kept open.
-4. **Disconnect**:
-   - Server handles clean shutdowns (Close frame).
-   - Client automatically attempts reconnects after 3s (implemented in `app.js`).
+### 2. Server -> Client
 
----
+#### A. Initial Game State
+**Type**: `init`
+Sent immediately upon connection.
 
-*Future phases will introduce a structured JSON protocol.*
+**Payload**:
+- `id`: Room ID.
+- `width`, `height`: World dimensions.
+- `tiles`: Array of Tile objects.
+
+**Tile Object (Optimized)**:
+- `x`, `y`: Coordinates.
+- `type`: Integer enum (0=Grass, 1=Water, 2=Stone).
+- **Note**: `type` is `omitempty`. If missing/0, it is Grass.
+
+**Example**:
+```json
+{
+  "type": "init",
+  "payload": {
+    "width": 32,
+    "height": 32,
+    "tiles": [
+      {"x":0, "y":0}, 
+      {"x":0, "y":1, "type":2} 
+    ]
+  }
+}
+```
+
+#### B. State Update (Broadcast)
+**Type**: `update`
+Sent to all clients in the room when state changes.
+
+**Payload**:
+- `tiles`: Array of changed tiles.
+
+**Example**:
+```json
+{
+  "type": "update",
+  "payload": {
+    "tiles": [
+      {"x":10, "y":5, "type":2}
+    ]
+  }
+}
+```
