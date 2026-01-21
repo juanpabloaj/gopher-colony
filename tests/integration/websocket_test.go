@@ -15,13 +15,16 @@ import (
 	"os"
 
 	adapter_http "github.com/juanpabloaj/gophercolony/internal/adapters/primary/http"
+	"github.com/juanpabloaj/gophercolony/internal/adapters/secondary/memsockets"
 	"github.com/juanpabloaj/gophercolony/internal/core/services"
 )
 
 func TestWebSocketConnection(t *testing.T) {
 	// 1. Setup Server
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	connManager := services.NewConnectionManager(logger)
+	mapGen := services.NewMapGenerator()
+	roomRepo := memsockets.NewRoomManager(mapGen)
+	connManager := services.NewConnectionManager(logger, roomRepo)
 
 	// We use the real adapter logic but with httptest
 	server := httptest.NewServer(http.HandlerFunc(connManager.HandleConnection))
@@ -37,6 +40,15 @@ func TestWebSocketConnection(t *testing.T) {
 		t.Fatalf("Failed to dial: %v", err)
 	}
 	defer c.Close(websocket.StatusInternalError, "the sky is falling")
+
+	// INCREASE READ LIMIT for Map Data
+	c.SetReadLimit(10 * 1024 * 1024)
+
+	// CONSUME INIT MESSAGE
+	_, _, err = c.Read(ctx) // Skip init
+	if err != nil {
+		t.Fatalf("Failed to read INIT: %v", err)
+	}
 
 	// 3. Send Message
 	msg := []byte("hello")
@@ -60,7 +72,9 @@ func TestWebSocketConnection(t *testing.T) {
 
 func TestRoomConnectivity(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	connManager := services.NewConnectionManager(logger)
+	mapGen := services.NewMapGenerator()
+	roomRepo := memsockets.NewRoomManager(mapGen)
+	connManager := services.NewConnectionManager(logger, roomRepo)
 	server := httptest.NewServer(http.HandlerFunc(connManager.HandleConnection))
 	defer server.Close()
 
@@ -73,6 +87,10 @@ func TestRoomConnectivity(t *testing.T) {
 		t.Fatalf("Failed to dial room alpha: %v", err)
 	}
 	defer c.Close(websocket.StatusInternalError, "error")
+
+	c.SetReadLimit(10 * 1024 * 1024)
+	// CONSUME INIT
+	c.Read(ctx)
 
 	if err := c.Write(ctx, websocket.MessageText, []byte("test")); err != nil {
 		t.Fatalf("Failed to write: %v", err)
@@ -93,7 +111,9 @@ func TestRoomConnectivity(t *testing.T) {
 
 func TestConcurrentConnections(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	connManager := services.NewConnectionManager(logger)
+	mapGen := services.NewMapGenerator()
+	roomRepo := memsockets.NewRoomManager(mapGen)
+	connManager := services.NewConnectionManager(logger, roomRepo)
 	server := httptest.NewServer(http.HandlerFunc(connManager.HandleConnection))
 	defer server.Close()
 
@@ -114,6 +134,14 @@ func TestConcurrentConnections(t *testing.T) {
 				return
 			}
 			defer c.Close(websocket.StatusInternalError, "")
+
+			c.SetReadLimit(10 * 1024 * 1024)
+			// CONSUME INIT
+			if _, _, err := c.Read(ctx); err != nil {
+				t.Errorf("Client %d failed to read INIT: %v", id, err)
+				done <- false
+				return
+			}
 
 			if err := c.Write(ctx, websocket.MessageText, []byte("ping")); err != nil {
 				t.Errorf("Client %d failed to write: %v", id, err)
@@ -146,7 +174,9 @@ func TestConcurrentConnections(t *testing.T) {
 
 func TestHTTPServerStartup(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	connManager := services.NewConnectionManager(logger)
+	mapGen := services.NewMapGenerator()
+	roomRepo := memsockets.NewRoomManager(mapGen)
+	connManager := services.NewConnectionManager(logger, roomRepo)
 
 	// Bind to port 0 to let OS choose
 	srv := adapter_http.NewServer(0, connManager, logger)

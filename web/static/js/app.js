@@ -1,5 +1,6 @@
 const statusDiv = document.getElementById('status');
 const logsDiv = document.getElementById('logs');
+const gridDiv = document.getElementById('game-grid');
 
 // Determine protocol (ws or wss)
 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -22,6 +23,27 @@ function log(msg) {
     logsDiv.scrollTop = logsDiv.scrollHeight;
 }
 
+function renderGrid(payload) {
+    gridDiv.innerHTML = '';
+
+    // Set grid dimensions
+    gridDiv.style.gridTemplateColumns = `repeat(${payload.width}, 20px)`;
+    gridDiv.style.gridTemplateRows = `repeat(${payload.height}, 20px)`;
+
+    payload.tiles.forEach(tile => {
+        const div = document.createElement('div');
+        div.className = `tile tile-${tile.Terrain}`;
+        div.title = `(${tile.X}, ${tile.Y})`;
+
+        // Optional: Emoji icons
+        if (tile.Terrain === 'water') div.textContent = '🌊';
+        else if (tile.Terrain === 'stone') div.textContent = '🪨';
+        else div.textContent = '🌱'; // Grass
+
+        gridDiv.appendChild(div);
+    });
+}
+
 function connect() {
     log(`Connecting to ${wsUrl}...`);
     const ws = new WebSocket(wsUrl);
@@ -30,13 +52,24 @@ function connect() {
         statusDiv.textContent = 'Connected';
         statusDiv.classList.add('connected');
         log('WebSocket connection established.');
-
-        // Send a test hello
-        ws.send('Hello from Frontend Gopher!');
     };
 
     ws.onmessage = (event) => {
-        log(`RX: ${event.data}`);
+        try {
+            const msg = JSON.parse(event.data);
+
+            if (msg.type === 'init') {
+                log('Received Map Initialization');
+                renderGrid(msg.payload);
+            } else if (msg.type === 'echo') {
+                log(`Echo: ${JSON.stringify(msg.payload)}`);
+            } else {
+                log(`RX: ${JSON.stringify(msg)}`);
+            }
+        } catch (e) {
+            // Fallback for Phase 1 text messages (if any)
+            log(`RX [Text]: ${event.data}`);
+        }
     };
 
     ws.onclose = () => {

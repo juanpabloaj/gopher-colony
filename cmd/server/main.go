@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/juanpabloaj/gophercolony/internal/adapters/primary/http"
+	"github.com/juanpabloaj/gophercolony/internal/adapters/secondary/memsockets"
 	"github.com/juanpabloaj/gophercolony/internal/core/services"
 )
 
@@ -20,9 +21,11 @@ func main() {
 	slog.SetDefault(logger)
 
 	// 2. Setup Services (Core)
-	// In Phase 1, we just have the ConnectionManager directly.
-	// Later, RoomManager will be injected here.
-	connManager := services.NewConnectionManager(logger)
+	mapGenerator := services.NewMapGenerator()
+	roomRepo := memsockets.NewRoomManager(mapGenerator)
+
+	// Inject Repo into ConnectionManager
+	connManager := services.NewConnectionManager(logger, roomRepo)
 
 	// 3. Setup Adapters (Primary)
 	srv := http.NewServer(8080, connManager, logger)

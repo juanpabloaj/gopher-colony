@@ -1,4 +1,4 @@
-package services
+package memsockets
 
 import (
 	"sync"
@@ -8,13 +8,15 @@ import (
 )
 
 type RoomManager struct {
-	rooms map[domain.RoomID]*domain.Room
-	mu    sync.RWMutex
+	rooms     map[domain.RoomID]*domain.Room
+	generator ports.MapGenerator
+	mu        sync.RWMutex
 }
 
-func NewRoomManager() *RoomManager {
+func NewRoomManager(gen ports.MapGenerator) *RoomManager {
 	return &RoomManager{
-		rooms: make(map[domain.RoomID]*domain.Room),
+		rooms:     make(map[domain.RoomID]*domain.Room),
+		generator: gen,
 	}
 }
 
@@ -35,8 +37,13 @@ func (rm *RoomManager) CreateRoom(id domain.RoomID) *domain.Room {
 		return room
 	}
 
+	// Create new room with a generated world
+	// 32x32 is the Phase 2 standard
+	world := rm.generator.Generate(32, 32)
+
 	room := &domain.Room{
-		ID: id,
+		ID:    id,
+		World: world,
 	}
 	rm.rooms[id] = room
 	return room

@@ -26,3 +26,8 @@ type RoomRepository interface {
 	GetRoom(id domain.RoomID) (*domain.Room, bool)
 	CreateRoom(id domain.RoomID) *domain.Room
 }
+
+// MapGenerator defines logic to create new worlds.
+type MapGenerator interface {
+	Generate(width, height int) *domain.World
+}

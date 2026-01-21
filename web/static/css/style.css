@@ -23,7 +23,7 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: fit-content;
     margin: 0 auto;
 }
 
@@ -93,4 +93,44 @@ h2 {
 .log-entry .time {
     color: var(--text-secondary);
     margin-right: 0.5rem;
+}
+
+/* Phase 2: Game Grid */
+#game-grid {
+    display: grid;
+    gap: 1px;
+    background-color: #333;
+    padding: 10px;
+    border: 1px solid #475569;
+    margin: 20px auto;
+}
+
+.tile {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.tile:hover {
+    filter: brightness(1.2);
+}
+
+.tile-grass {
+    background-color: #2e7d32;
+    color: #a5d6a7;
+}
+
+.tile-water {
+    background-color: #1565c0;
+    color: #90caf9;
+}
+
+.tile-stone {
+    background-color: #757575;
+    color: #e0e0e0;
 }
