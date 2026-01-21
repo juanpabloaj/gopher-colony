@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"sync"
 
@@ -48,14 +49,32 @@ func (a *Adapter) Close(code int) error {
 	return err
 }
 
-func (a *Adapter) writePump() {
-	ctx := context.Background()
-	for msg := range a.sendChan {
-		// We use a separate context for writes to ensure they complete
-		// independent of the request context (which might be cancelled)
-		// but we respect the connection state.
-		if err := a.conn.Write(ctx, websocket.MessageText, msg); err != nil {
-			break // Connection closed or error
+func (a *Adapter) writePump(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case msg, ok := <-a.sendChan:
+			if !ok {
+				// Channel closed
+				a.conn.Close(websocket.StatusNormalClosure, "channel closed")
+				return
+			}
+			if err := a.conn.Write(ctx, websocket.MessageText, msg); err != nil {
+				return
+			}
+		case <-ticker.C:
+			// Ping sends a ping to the peer and waits for a pong.
+			// context used for timeout
+			pingCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+			err := a.conn.Ping(pingCtx)
+			cancel()
+			if err != nil {
+				return
+			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
@@ -63,7 +82,7 @@ func (a *Adapter) writePump() {
 // Listen starts a loop to read messages. It blocks until error or close.
 func (a *Adapter) Listen(ctx context.Context, onMessage func(msg []byte)) error {
 	// Start Write Pump: linked to the lifecycle of the Read Loop
-	go a.writePump()
+	go a.writePump(ctx)
 
 	defer a.Close(int(websocket.StatusNormalClosure)) // Ensure cleanup on read error
 

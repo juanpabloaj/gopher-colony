@@ -24,7 +24,7 @@ func TestWebSocketConnection(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	mapGen := services.NewMapGenerator()
 	roomRepo := memsockets.NewRoomManager(mapGen)
-	connManager := services.NewConnectionManager(logger, roomRepo)
+	connManager := services.NewConnectionManager(logger, roomRepo, nil)
 
 	// We use the real adapter logic but with httptest
 	server := httptest.NewServer(http.HandlerFunc(connManager.HandleConnection))
@@ -73,7 +73,7 @@ func TestRoomConnectivity(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	mapGen := services.NewMapGenerator()
 	roomRepo := memsockets.NewRoomManager(mapGen)
-	connManager := services.NewConnectionManager(logger, roomRepo)
+	connManager := services.NewConnectionManager(logger, roomRepo, nil)
 	server := httptest.NewServer(http.HandlerFunc(connManager.HandleConnection))
 	defer server.Close()
 
@@ -112,7 +112,7 @@ func TestConcurrentConnections(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	mapGen := services.NewMapGenerator()
 	roomRepo := memsockets.NewRoomManager(mapGen)
-	connManager := services.NewConnectionManager(logger, roomRepo)
+	connManager := services.NewConnectionManager(logger, roomRepo, nil)
 	server := httptest.NewServer(http.HandlerFunc(connManager.HandleConnection))
 	defer server.Close()
 
@@ -182,7 +182,7 @@ func TestCommandMutation(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	mapGen := services.NewSeededMapGenerator(12345)
 	roomRepo := memsockets.NewRoomManager(mapGen)
-	connManager := services.NewConnectionManager(logger, roomRepo)
+	connManager := services.NewConnectionManager(logger, roomRepo, nil)
 	server := httptest.NewServer(http.HandlerFunc(connManager.HandleConnection))
 	defer server.Close()
 
@@ -240,7 +240,7 @@ func TestHTTPServerStartup(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	mapGen := services.NewMapGenerator()
 	roomRepo := memsockets.NewRoomManager(mapGen)
-	connManager := services.NewConnectionManager(logger, roomRepo)
+	connManager := services.NewConnectionManager(logger, roomRepo, nil)
 
 	// Bind to port 0 to let OS choose
 	srv := adapter_http.NewServer(0, connManager, logger)

@@ -177,3 +177,15 @@ h2 {
 .btn:active {
     filter: brightness(0.9);
 }
+
+.tile-sapling {
+    color: #4caf50;
+    /* grass background */
+    background-color: #2e7d32; 
+}
+
+.tile-tree {
+    color: #1b5e20;
+    /* grass background */
+    background-color: #2e7d32;
+}

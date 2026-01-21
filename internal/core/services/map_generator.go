@@ -33,14 +33,25 @@ func (g *MapGenerator) Generate(width, height int) *domain.World {
 	// Simple generation: Scatter water
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			r := rnd.Float64()
-			if r < 0.2 {
-				world.Grid[y][x].Terrain = domain.TerrainWater
-			} else if r < 0.25 {
-				world.Grid[y][x].Terrain = domain.TerrainStone
+			// Perlin noise or simple random for now
+			// We already use seeded randomness via rnd (type *rand.Rand)
+
+			val := rnd.Float64()
+			var tType domain.TerrainType
+
+			if val < 0.1 {
+				tType = domain.TerrainWater
+			} else if val < 0.15 {
+				tType = domain.TerrainStone
+			} else if val < 0.20 {
+				// 5% Chance for Sapling
+				tType = domain.TerrainSapling
 			} else {
-				world.Grid[y][x].Terrain = domain.TerrainGrass
+				tType = domain.TerrainGrass
 			}
+
+			// Our domain.Tile struct has Terrain TerrainType.
+			world.Grid[y][x].Terrain = tType
 		}
 	}
 

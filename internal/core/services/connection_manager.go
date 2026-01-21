@@ -20,16 +20,18 @@ import (
 type ConnectionManager struct {
 	logger   *slog.Logger
 	roomRepo ports.RoomRepository
+	delegate ports.RoomLifecycleDelegate
 
 	// Registry per room
 	clients map[domain.RoomID]map[ports.Socket]struct{}
 	mu      sync.RWMutex
 }
 
-func NewConnectionManager(logger *slog.Logger, roomRepo ports.RoomRepository) *ConnectionManager {
+func NewConnectionManager(logger *slog.Logger, roomRepo ports.RoomRepository, delegate ports.RoomLifecycleDelegate) *ConnectionManager {
 	return &ConnectionManager{
 		logger:   logger,
 		roomRepo: roomRepo,
+		delegate: delegate,
 		clients:  make(map[domain.RoomID]map[ports.Socket]struct{}),
 	}
 }
@@ -88,7 +90,11 @@ func (s *ConnectionManager) HandleConnection(w http.ResponseWriter, r *http.Requ
 
 	// 2. Get or Create Room (and World)
 	// We use CreateRoom which handles get-or-create logic in our simple repo
-	room := s.roomRepo.CreateRoom(roomID)
+	room, created := s.roomRepo.CreateRoom(roomID)
+
+	if created && s.delegate != nil {
+		s.delegate.OnRoomCreated(room)
+	}
 
 	// Accept the WebSocket connection
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{

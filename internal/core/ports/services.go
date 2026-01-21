@@ -10,6 +10,11 @@ import (
 // ConnectionService defines how the primary adapter (HTTP) hands off connections to the core.
 type ConnectionService interface {
 	HandleConnection(w http.ResponseWriter, r *http.Request)
+	Broadcast(roomID domain.RoomID, msg []byte)
+}
+
+type RoomLifecycleDelegate interface {
+	OnRoomCreated(room *domain.Room)
 }
 
 // Socket represents the abstraction of a WebSocket connection (Output Port).
@@ -24,7 +29,7 @@ type Socket interface {
 // RoomRepository defines storage for active rooms.
 type RoomRepository interface {
 	GetRoom(id domain.RoomID) (*domain.Room, bool)
-	CreateRoom(id domain.RoomID) *domain.Room
+	CreateRoom(id domain.RoomID) (*domain.Room, bool)
 }
 
 // MapGenerator defines logic to create new worlds.

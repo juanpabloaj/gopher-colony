@@ -4,9 +4,11 @@ package domain
 type TerrainType int
 
 const (
-	TerrainGrass TerrainType = iota // 0
-	TerrainWater                    // 1
-	TerrainStone                    // 2
+	TerrainGrass   TerrainType = iota // 0
+	TerrainWater                      // 1
+	TerrainStone                      // 2
+	TerrainSapling                    // 3
+	TerrainTree                       // 4
 )
 
 // Tile represents a single cell in the grid.
@@ -41,4 +43,12 @@ func NewWorld(width, height int) *World {
 		Height: height,
 		Grid:   grid,
 	}
+}
+
+// GetTile returns the tile at the given coordinates, or nil/false if out of bounds.
+func (w *World) GetTile(x, y int) (*Tile, bool) {
+	if x < 0 || y < 0 || x >= w.Width || y >= w.Height {
+		return nil, false
+	}
+	return w.Grid[y][x], true
 }

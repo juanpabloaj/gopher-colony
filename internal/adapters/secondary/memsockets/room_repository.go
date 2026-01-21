@@ -28,13 +28,13 @@ func (rm *RoomManager) GetRoom(id domain.RoomID) (*domain.Room, bool) {
 	return room, exists
 }
 
-func (rm *RoomManager) CreateRoom(id domain.RoomID) *domain.Room {
+func (rm *RoomManager) CreateRoom(id domain.RoomID) (*domain.Room, bool) {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
 	// Double check
 	if room, exists := rm.rooms[id]; exists {
-		return room
+		return room, false
 	}
 
 	// Create new room with a generated world
@@ -46,7 +46,7 @@ func (rm *RoomManager) CreateRoom(id domain.RoomID) *domain.Room {
 		World: world,
 	}
 	rm.rooms[id] = room
-	return room
+	return room, true
 }
 
 var _ ports.RoomRepository = &RoomManager{}

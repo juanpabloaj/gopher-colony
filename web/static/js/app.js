@@ -43,7 +43,9 @@ function renderGrid(payload) {
     const TERRAIN_MAP = {
         0: 'grass',
         1: 'water',
-        2: 'stone'
+        2: 'stone',
+        3: 'sapling',
+        4: 'tree'
     };
 
     payload.tiles.forEach(tile => {
@@ -61,7 +63,9 @@ function renderGrid(payload) {
         // Optional: Emoji icons
         if (terrainName === 'water') div.textContent = '🌊';
         else if (terrainName === 'stone') div.textContent = '🪨';
-        else div.textContent = '🌱'; // Grass
+        else if (terrainName === 'sapling') div.textContent = '🌱';
+        else if (terrainName === 'tree') div.textContent = '🌳';
+        else div.textContent = ''; // Grass (empty or dot)
 
         gridDiv.appendChild(div);
     });
@@ -71,7 +75,9 @@ function updateTile(x, y, terrain) {
     const TERRAIN_MAP = {
         0: 'grass',
         1: 'water',
-        2: 'stone'
+        2: 'stone',
+        3: 'sapling',
+        4: 'tree'
     };
     const terrainName = TERRAIN_MAP[terrain] || 'grass';
 
@@ -80,7 +86,9 @@ function updateTile(x, y, terrain) {
         div.className = `tile tile-${terrainName}`;
         if (terrainName === 'water') div.textContent = '🌊';
         else if (terrainName === 'stone') div.textContent = '🪨';
-        else div.textContent = '🌱'; // Grass
+        else if (terrainName === 'sapling') div.textContent = '🌱';
+        else if (terrainName === 'tree') div.textContent = '🌳';
+        else div.textContent = ''; // Grass
 
         // Flash effect
         div.style.filter = "brightness(2)";

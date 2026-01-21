@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/juanpabloaj/gophercolony/internal/adapters/primary/http"
+	"github.com/juanpabloaj/gophercolony/internal/adapters/primary/lifecycle"
 	"github.com/juanpabloaj/gophercolony/internal/adapters/secondary/memsockets"
 	"github.com/juanpabloaj/gophercolony/internal/core/services"
 )
@@ -24,8 +25,17 @@ func main() {
 	mapGenerator := services.NewMapGenerator()
 	roomRepo := memsockets.NewRoomManager(mapGenerator)
 
+	simService := services.NewSimulationService(logger)
+
 	// Inject Repo into ConnectionManager
-	connManager := services.NewConnectionManager(logger, roomRepo)
+	// We use the RoomDelegate to break the import cycle between Services and Adapters (Ticker).
+	delegate := lifecycle.NewRoomDelegate(logger, simService, nil) // ConnService nil initially
+
+	connManager := services.NewConnectionManager(logger, roomRepo, delegate)
+
+	// Update delegate with the concrete wrapper (or service if it implemented interface)
+	// ConnectionManager implements ports.ConnectionService, so we pass it.
+	delegate.ConnService = connManager
 
 	// 3. Setup Adapters (Primary)
 	srv := http.NewServer(8080, connManager, logger)

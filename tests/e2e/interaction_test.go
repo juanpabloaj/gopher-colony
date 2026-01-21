@@ -39,7 +39,7 @@ func TestTileInteraction(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	mapGen := services.NewSeededMapGenerator(123) // Deterministic map
 	roomRepo := memsockets.NewRoomManager(mapGen)
-	connManager := services.NewConnectionManager(logger, roomRepo)
+	connManager := services.NewConnectionManager(logger, roomRepo, nil)
 
 	// Ensure we are in the project root for static file serving
 	// Usually tests run in the package dir. We might need to change WD or move files.
