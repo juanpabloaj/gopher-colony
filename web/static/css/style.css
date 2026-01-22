@@ -1,11 +1,41 @@
 :root {
+    /* Premium Dark Palette (Slate/Zinc biased) */
     --bg-color: #0f172a;
-    --card-bg: #1e293b;
-    --text-primary: #f1f5f9;
+    --bg-gradient: radial-gradient(circle at top center, #1e293b, #0f172a);
+
+    /* Glassmorphism Cards */
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+
+    /* Text */
+    --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+
+    /* Accents */
     --accent: #3b82f6;
-    --success: #22c55e;
+    /* Blue 500 */
+    --accent-hover: #2563eb;
+    --accent-glow: rgba(59, 130, 246, 0.4);
+
+    --success: #10b981;
+    /* Emerald 500 */
+    --warning: #f59e0b;
     --error: #ef4444;
+
+    /* Tiles */
+    --tile-grass: #2d4f33;
+    /* Desaturated deep green */
+    --tile-grass-text: #86efac;
+
+    --tile-water: #1e3a8a;
+    /* Deep blue */
+    --tile-water-text: #93c5fd;
+
+    --tile-stone: #475569;
+    /* Slate 600 */
+    --tile-stone-text: #cbd5e1;
 }
 
 * {
@@ -16,129 +46,179 @@
 
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: var(--bg-color);
+    background: var(--bg-color);
+    background-image: var(--bg-gradient);
+    background-attachment: fixed;
     color: var(--text-primary);
-    line-height: 1.5;
+    line-height: 1.6;
     padding: 2rem;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
 }
 
 .container {
-    max-width: fit-content;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
 }
 
+/* Typography & Titles */
 h1 {
-    margin-bottom: 2rem;
-    font-size: 2rem;
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    background: linear-gradient(to right, #ffffff, #94a3b8);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     gap: 1rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .badge {
-    font-size: 0.8rem;
-    background: var(--accent);
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(59, 130, 246, 0.3);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    vertical-align: middle;
+    -webkit-text-fill-color: #60a5fa;
+    /* Override gradient from H1 */
 }
 
+/* Glass Cards */
 .card {
     background: var(--card-bg);
-    border-radius: 8px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
     padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    width: 100%;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 h2 {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--text-secondary);
     margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
+h2::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 1rem;
+    background: var(--accent);
+    border-radius: 2px;
+}
+
+/* Input & Controls */
+.room-controls {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.input-field {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.input-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
+}
+
+.btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px rgba(59, 130, 246, 0.35);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Status Indicator */
 .status-indicator {
-    display: inline-block;
     padding: 0.5rem 1rem;
-    border-radius: 4px;
-    background: rgba(239, 68, 68, 0.2);
-    color: var(--error);
-    font-weight: bold;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    /* Soft red */
+    border: 1px solid rgba(239, 68, 68, 0.3);
     transition: all 0.3s ease;
 }
 
 .status-indicator.connected {
-    background: rgba(34, 197, 94, 0.2);
-    color: var(--success);
+    background: rgba(16, 185, 129, 0.15);
+    color: #6ee7b7;
+    /* Soft emerald */
+    border-color: rgba(16, 185, 129, 0.3);
 }
 
-.log-console {
-    background: #000;
-    font-family: 'Fira Code', monospace;
-    font-size: 0.9rem;
-    padding: 1rem;
-    border-radius: 4px;
-    height: 300px;
-    overflow-y: auto;
-    color: #e2e8f0;
-}
-
-.log-entry {
-    margin-bottom: 0.25rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 0.25rem;
-}
-
-.log-entry .time {
-    color: var(--text-secondary);
-    margin-right: 0.5rem;
-}
-
-/* Phase 2: Game Grid */
+/* Game Grid - The Board */
 #game-grid {
     display: grid;
     gap: 1px;
-    background-color: #333;
-    padding: 10px;
-    border: 1px solid #475569;
-    margin: 20px auto;
+    background-color: #1e293b;
+    /* Grid line color */
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 0 auto;
+    width: fit-content;
     position: relative;
-    /* For absolute positioning of agents */
+    overflow: hidden;
+    /* For shine effects if we want */
 }
 
-.gopher {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    transition: all 0.5s ease-in-out;
-    z-index: 10;
-}
-
-.gopher-body {
-    font-size: 16px;
-    z-index: 1;
-}
-
-.gopher.carrying .gopher-body {
-    /* Slightly shift left to make room? Or keep centered? */
-    /* font-size: 14px; */
-}
-
-.gopher-cargo {
-    position: absolute;
-    bottom: -2px;
-    right: -2px;
-    font-size: 10px;
-    z-index: 2;
-    filter: drop-shadow(0 0 1px black);
-    /* Outline for visibility */
-}
-
+/* Tiles */
 .tile {
     width: 20px;
     height: 20px;
@@ -148,79 +228,181 @@ h2 {
     font-size: 14px;
     cursor: pointer;
     user-select: none;
+    transition: filter 0.1s;
+    position: relative;
 }
 
 .tile:hover {
-    filter: brightness(1.2);
+    filter: brightness(1.3);
+    z-index: 5;
 }
 
+/* Terrain Specifics */
 .tile-grass {
-    background-color: #2e7d32;
-    color: #a5d6a7;
+    background-color: var(--tile-grass);
+    color: var(--tile-grass-text);
 }
 
 .tile-water {
-    background-color: #1565c0;
-    color: #90caf9;
+    background-color: var(--tile-water);
+    color: var(--tile-water-text);
+    animation: wave 3s infinite alternate ease-in-out;
 }
 
 .tile-stone {
-    background-color: #757575;
-    color: #e0e0e0;
+    background-color: var(--tile-stone);
+    color: var(--tile-stone-text);
 }
 
-/* UI Controls */
-.room-controls {
-    margin-top: 1rem;
+/* Entities */
+.tile-sapling,
+.tile-tree {
+    background-color: var(--tile-grass);
+    color: #4ade80;
+    /* Brighter green */
+}
+
+.tile-chest {
+    background-color: var(--tile-grass);
+    /* Or wooden floor color if we had it */
+    font-size: 16px;
+    z-index: 2;
+}
+
+/* Gophers */
+.gopher {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: left 0.5s linear, top 0.5s linear;
+    /* Linear movement for smoothness via ticks */
+    z-index: 20;
+    /* Bounce animation */
+    /* animation: bounce 0.5s infinite alternate; */
+    /* Too distracting for grid ? */
+}
+
+.gopher-body {
+    font-size: 16px;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
+}
+
+.gopher.carrying .gopher-body {
+    transform: scale(0.9);
+}
+
+.gopher-cargo {
+    position: absolute;
+    bottom: -6px;
+    right: -6px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 1px 3px;
+    border-radius: 6px;
+    z-index: 21;
+    white-space: nowrap;
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+/* Logs */
+.log-console {
+    background: #0f172a;
+    /* Darker than card */
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    padding: 1rem;
+    border-radius: 8px;
+    height: 250px;
+    overflow-y: auto;
+    color: #cbd5e1;
+    border: 1px solid var(--card-border);
+}
+
+.log-entry {
+    padding: 0.25rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     gap: 0.5rem;
 }
 
-.input-field {
+.log-entry .time {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    min-width: 65px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Resources HUD - Floating Pill */
+#resources-hud {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-size: 0.95rem;
     color: var(--text-primary);
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.2s;
+    transform: translateY(0);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.input-field:focus {
-    border-color: var(--accent);
+#resources-hud:hover {
+    transform: translateY(2px) scale(1.02);
 }
 
-.btn {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: filter 0.2s;
+.resource-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
 }
 
-.btn:hover {
-    filter: brightness(1.1);
-}
-
-.btn:active {
-    filter: brightness(0.9);
-}
-
-.tile-sapling {
-    color: #4caf50;
-    /* grass background */
-    background-color: #2e7d32;
-}
-
-.tile-tree {
-    color: #1b5e20;
-    /* grass background */
-    background-color: #2e7d32;
+.resource-item span:first-child {
+    font-size: 1.2rem;
 }

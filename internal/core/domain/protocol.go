@@ -23,8 +23,9 @@ type CommandPayload struct {
 
 // UpdatePayload represents incremental changes.
 type UpdatePayload struct {
-	Tiles   []Tile   `json:"tiles,omitempty"`
-	Gophers []Gopher `json:"gophers,omitempty"`
+	Tiles     []Tile         `json:"tiles,omitempty"`
+	Gophers   []Gopher       `json:"gophers,omitempty"`
+	Resources map[string]int `json:"resources,omitempty"`
 }
 
 // Message is the standard container for all WS communication.
@@ -35,9 +36,10 @@ type Message struct {
 
 // GameStatePayload represents the initial state sent to a client.
 type GameStatePayload struct {
-	RoomID  RoomID   `json:"id"`
-	Width   int      `json:"width"`
-	Height  int      `json:"height"`
-	Tiles   []Tile   `json:"tiles"`
-	Gophers []Gopher `json:"gophers"` // Flattened for simple JSON serialization
+	RoomID    RoomID         `json:"id"`
+	Width     int            `json:"width"`
+	Height    int            `json:"height"`
+	Tiles     []Tile         `json:"tiles"`
+	Gophers   []Gopher       `json:"gophers"` // Flattened for simple JSON serialization
+	Resources map[string]int `json:"resources"`
 }

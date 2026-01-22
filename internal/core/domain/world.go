@@ -1,23 +1,5 @@
 package domain
 
-// TerrainType represents the type of terrain on a tile.
-type TerrainType int
-
-const (
-	TerrainGrass   TerrainType = iota // 0
-	TerrainWater                      // 1
-	TerrainStone                      // 2
-	TerrainSapling                    // 3
-	TerrainTree                       // 4
-)
-
-// Tile represents a single cell in the grid.
-type Tile struct {
-	X       int         `json:"x"`
-	Y       int         `json:"y"`
-	Terrain TerrainType `json:"type,omitempty"`
-}
-
 // World represents the game map.
 type World struct {
 	Width  int

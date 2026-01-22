@@ -39,7 +39,8 @@ const TERRAIN_MAP = {
     1: 'water',
     2: 'stone',
     3: 'sapling',
-    4: 'tree'
+    4: 'tree',
+    5: 'chest'
 };
 
 function updateTileVisuals(div, terrainType) {
@@ -56,7 +57,31 @@ function updateTileVisuals(div, terrainType) {
     else if (terrainName === 'stone') div.textContent = '🪨';
     else if (terrainName === 'sapling') div.textContent = '🌱';
     else if (terrainName === 'tree') div.textContent = '🌳';
+    else if (terrainName === 'tree') div.textContent = '🌳';
+    else if (terrainName === 'chest') div.textContent = '📦';
     else div.textContent = ''; // Grass
+}
+
+function updateResources(resources) {
+    let hud = document.getElementById('resources-hud');
+    if (!hud) {
+        hud = document.createElement('div');
+        hud.id = 'resources-hud';
+        document.body.appendChild(hud);
+    }
+
+    // No title inside the pill, just icons and numbers for cleaner look
+    let html = '';
+    for (const [key, value] of Object.entries(resources)) {
+        let icon = '❓';
+        if (key === 'wood') icon = '🪵';
+
+        html += `<div class="resource-item" title="${key.charAt(0).toUpperCase() + key.slice(1)}">
+                    <span>${icon}</span> 
+                    <span>${value}</span>
+                 </div>`;
+    }
+    hud.innerHTML = html;
 }
 
 function renderGrid(payload) {
@@ -134,6 +159,9 @@ function connect() {
             if (msg.payload.gophers) {
                 msg.payload.gophers.forEach(g => updateGopher(g));
             }
+            if (msg.payload.resources) {
+                updateResources(msg.payload.resources);
+            }
         } else if (msg.type === 'echo') {
             log(`Echo: ${JSON.stringify(msg.payload)}`);
         } else {
@@ -172,7 +200,8 @@ function updateGopher(gopher) {
     // Update visual content based on inventory
     let html = '<span class="gopher-body">🐹</span>';
     if (gopher.inventory && gopher.inventory.wood > 0) {
-        html += '<span class="gopher-cargo">🪵</span>';
+        // Show count if carrying
+        html += `<span class="gopher-cargo">🪵${gopher.inventory.wood}</span>`;
         div.classList.add('carrying');
     } else {
         div.classList.remove('carrying');

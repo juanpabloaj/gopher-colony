@@ -45,5 +45,11 @@ func (g *MapGenerator) Generate(width, height int, seed int64) *domain.World {
 		}
 	}
 
+	// Phase 5 Stage 3: Place a Storage Chest at the center
+	cx, cy := width/2, height/2
+	if cx >= 0 && cx < width && cy >= 0 && cy < height {
+		world.Grid[cy][cx].Terrain = domain.TerrainChest
+	}
+
 	return world
 }

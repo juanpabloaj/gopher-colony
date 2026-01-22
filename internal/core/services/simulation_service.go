@@ -62,6 +62,17 @@ func (s *SimulationService) Tick(room *domain.Room) domain.UpdatePayload {
 	s.simulateGophers(room, &changes)
 	s.simulatePlants(room, &changes)
 
+	// Add current resources state to payload (simple)
+	// We could optimize to only send if changed, but map is small.
+	// Room.Resources read requires lock.
+	// SimulateGophers might have updated it.
+	// Let's add a Safe GetResources method or just peek Snapshot?
+	// Snapshot is heavy.
+	// Since Room.DepositResource locks, we can't read it concurrently easily without lock.
+	// Let's rely on changes? No, DepositResource doesn't return changes.
+	// We can explicitly read it here.
+	changes.Resources = room.GetResources()
+
 	return changes
 }
 
@@ -110,6 +121,93 @@ func (s *SimulationService) simulateGophers(room *domain.Room, changes *domain.U
 	// Move Logic
 	for _, g := range gophers {
 		didAction := false
+
+		// 0. Try to Deliver Logic (Priority over Harvest)
+		if g.Inventory.Wood > 0 {
+			// Seek Chest
+			// Heuristic: Check if adjacent to chest.
+			// Or move towards chest.
+			// Ideally we know chest location. For now scan offsets or assume center?
+			// Scanning whole map is expensive.
+			// Let's interact if adjacent to Chest.
+
+			offsets := [][]int{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
+
+			deposited := false
+			for _, offset := range offsets {
+				tX, tY := g.X+offset[0], g.Y+offset[1]
+				tile, ok := room.GetTile(tX, tY)
+				if ok && tile.Terrain == domain.TerrainChest {
+					// Deposit
+					amount := g.Inventory.Wood
+
+					// Update Gopher
+					updatedGopher := g
+					updatedGopher.Inventory.Wood = 0
+
+					// Update Room Resources
+					// We need a method on Room to AddResource?
+					// Or we lock and map access. Room.Resources is exported but we need lock.
+					// Let's add room.AddResource(type, amount) to types.go?
+					// For now, assume we can add a method or do it roughly here if we dare (we can't, race).
+					// Let's add AddResource to Room in next step.
+					// We will Assume Room.Deposit(resource, amount) exists.
+
+					room.DepositResource("wood", amount)
+					room.UpdateGopher(&updatedGopher)
+
+					changes.Gophers = append(changes.Gophers, updatedGopher)
+					// changes.Resources? We need to send resource update.
+					// UpdatePayload needs Resources map?
+					// We added Resources to GameStatePayload.
+					// Protocol UpdatePayload needs it too.
+					// Let's add it to protocol in next step.
+
+					deposited = true
+					didAction = true
+					break
+				}
+			}
+
+			// If not adjacent, we should move towards chest?
+			// For simplicity: Random walk for now?
+			// Gophers will stumble upon chest eventually.
+			// Or we implement basic homing: Center is target.
+			if !deposited && g.Inventory.Wood >= 10 {
+				// If full, SEEK chest (simple vector)
+				chestX, chestY := 16, 16 // Hardcoded or find it?
+				// Simple step towards center
+				dx, dy := 0, 0
+				if g.X < chestX {
+					dx = 1
+				} else if g.X > chestX {
+					dx = -1
+				}
+				if g.Y < chestY {
+					dy = 1
+				} else if g.Y > chestY {
+					dy = -1
+				}
+
+				// Apply randomized component to avoid getting stuck?
+				// Try direct move first
+				if dx != 0 || dy != 0 {
+					newX, newY := g.X+dx, g.Y+dy
+					if room.MoveGopher(g.ID, newX, newY) {
+						updatedGopher := g
+						updatedGopher.X = newX
+						updatedGopher.Y = newY
+						updatedGopher.State = domain.GopherStateMoving
+						changes.Gophers = append(changes.Gophers, updatedGopher)
+						continue // Next gopher
+					}
+				}
+			}
+
+			if deposited {
+				continue
+			}
+		}
 
 		// 1. Try to Harvest Logic
 		// Capacity check (limit 10 for now)

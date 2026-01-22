@@ -7,19 +7,62 @@ import (
 type PlayerID string
 type RoomID string
 
+// TerrainType represents the type of terrain on a tile.
+type TerrainType int
+
+const (
+	TerrainGrass   TerrainType = 0
+	TerrainWater   TerrainType = 1
+	TerrainStone   TerrainType = 2
+	TerrainSapling TerrainType = 3
+	TerrainTree    TerrainType = 4
+	TerrainChest   TerrainType = 5
+)
+
 // Player represents a connected user in the game.
 type Player struct {
 	ID   PlayerID
 	Name string
 }
 
+// Tile represents a single cell in the grid.
+type Tile struct {
+	X       int         `json:"x"`
+	Y       int         `json:"y"`
+	Terrain TerrainType `json:"type"` // 0=Grass, 1=Water, 2=Stone, 3=Sapling, 4=Tree, 5=Chest
+}
+
 // Room represents a game instance/world.
 type Room struct {
-	ID      RoomID
-	World   *World
-	Gophers map[string]*Gopher // Registry of agents
+	ID        RoomID
+	World     *World
+	Gophers   map[string]*Gopher // Registry of agents
+	Resources map[string]int     // Global resources (e.g. "wood")
 	// mu is unexported to force usage of thread-safe methods
 	mu sync.RWMutex
+}
+
+// DepositResource adds amount to a specific resource type.
+func (r *Room) DepositResource(resource string, amount int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.Resources == nil {
+		r.Resources = make(map[string]int)
+	}
+	r.Resources[resource] += amount
+}
+
+// GetResources returns a copy of the resources map.
+func (r *Room) GetResources() map[string]int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	copy := make(map[string]int)
+	for k, v := range r.Resources {
+		copy[k] = v
+	}
+	return copy
 }
 
 // SetTile updates a tile safely and returns true if changed.
@@ -96,11 +139,12 @@ func (r *Room) Snapshot() GameStatePayload {
 		}
 
 		return GameStatePayload{
-			RoomID:  r.ID,
-			Width:   r.World.Width,
-			Height:  r.World.Height,
-			Tiles:   tiles,
-			Gophers: gophers,
+			RoomID:    r.ID,
+			Width:     r.World.Width,
+			Height:    r.World.Height,
+			Tiles:     tiles,
+			Gophers:   gophers,
+			Resources: r.Resources,
 		}
 	}
 
